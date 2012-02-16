@@ -2,11 +2,15 @@ define [], ->
   return (el, target)->
     $el = $(el)
     target = target || $el.data("target")
-    
-    # TODO: make this a query parameter or some such
-    connected_lines = false
 
+    # TODO: make this a query parameter or some such
+    connected_lines = true
+
+    colors = ["steelblue", "green", "red", "gray"]
     chart = (results)->
+      content = $ '#chart > svg > *'
+      content.remove()
+
       # Turn results into a list of targets, each one consisting of label, color, width, lines and the min/max/current
       # values.  Each line is a sequence of X/Y points.  Also determine maximum and minimum (Y), from/to times (X).
       targets = []
@@ -17,7 +21,7 @@ define [], ->
         lines = []
         target =
           label: result.target
-          color: "steelblue"
+          color: colors.shift()
           width: 1
           lines: lines
         datapoints = result.datapoints
@@ -29,7 +33,7 @@ define [], ->
 
         line = null
         for i, [value, time] of datapoints
-          target.last = value
+          target.last = value || target.last
 
           if value == null
             if connected_lines == false
@@ -90,17 +94,20 @@ define [], ->
         .attr("class", (d, i)-> if i > 0 then "y" else "y axis" )
 
       # Draw each line
+      i = 0
       for target in targets
+        i++
         svg_line = d3.svg.line().interpolate("basis-open")
           .x( (d)-> x_scale(d.x) )
           .y( (d)-> y_scale(d.y) )
-        vis.selectAll("path").data(target.lines).enter().append("svg:path")
+        vis.selectAll("path"+i).data(target.lines).enter().append("svg:path")
           .attr("d", svg_line).style("stroke-width", target.width * 2).style("stroke", target.color)
 
       # Add labels at bottom of chart
       labels = vis.append("svg:svg").attr("x", 0).attr("y", height + margin * 2).attr("width", width - 400).attr("height", margin * targets.length * 1.2)
       labels.selectAll("text.label").data(targets).enter()
         .append("svg:text").attr("x", 0).attr("y", (d, i)-> margin + margin * i * 1.2 ).style("stroke", (d)-> d.color).text( (d)-> d.label )
+
       ranges = vis.append("svg:svg").attr("x", width - 400).attr("y", height + margin * 2).attr("width", 400).attr("height", margin * targets.length * 1.2)
       ranges.selectAll("text.label").data(targets).enter()
         .append("svg:text").attr("x", 400).attr("y", (d, i)-> margin + margin * i * 1.2 ).style("stroke", (d)-> d.color).attr("text-anchor", "end")
