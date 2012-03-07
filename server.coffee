@@ -67,6 +67,16 @@ server.get "/render", (req, res, next)->
     if error
       res.send error: error.message, 400
     else
+      # filter out undefined values
+      for k of results
+        result = results[k]
+        dp = []
+        for k2 of result.datapoints
+          point = result.datapoints[k2]
+          if point[0] != undefined
+            dp.push point
+        result.datapoints = dp
+
       res.send results
 
 
