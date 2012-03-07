@@ -20,7 +20,6 @@ server.listen 8080
 
 whisper = new Whisper(process.env.GRAPHITE_STORAGE || "/opt/graphite/storage")
 
-
 # Main page lists all known metrics.
 server.get "/", (req, res, next)->
   whisper.index (error, metrics)->
