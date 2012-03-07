@@ -28,8 +28,15 @@ server.get "/", (req, res, next)->
 
 # Graph a particular target.
 server.get "/graph/*", (req, res, next)->
-  target = req.params[0]
-  res.render "graph", target: target
+  options =
+    target: req.params[0]
+    width: req.query.width || 800
+    from: req.query.from
+    to: req.query.until
+    markers: req.query.markers
+
+  res.render "graph", options
+    
 
 # This is supposed to work like Graphite's /render but only support JSON output.
 server.get "/render", (req, res, next)->
