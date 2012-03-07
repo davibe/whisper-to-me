@@ -40,10 +40,29 @@ server.get "/graph/*", (req, res, next)->
 
 # This is supposed to work like Graphite's /render but only support JSON output.
 server.get "/render", (req, res, next)->
-  from = (Date.now() / 1000 - 84600)
+  return if not req.query.target
+  from = (Date.now() / 1000 - 1*60*60) # last 24 hours by default
   to = Date.now() / 1000
+  width = req.query.width || 800
 
-  context = new RequestContext(whisper: whisper, from: from, to: to, width: 800)
+  if req.query.from
+    from_value = parseInt req.query.from
+    if from_value > 0
+      from = from_value
+    else
+      from = to + from_value
+
+  if req.query.until
+    to_value = parseInt req.query.until
+    if to_value > 0
+      to = to_value
+    else
+      to = to + to_value
+
+  console.log 'From ' + from
+  console.log 'Until ' + to
+
+  context = new RequestContext(whisper: whisper, from: from, to: to, width: width)
   context.evaluate req.query.target.split(";"), (error, results)->
     if error
       res.send error: error.message, 400
