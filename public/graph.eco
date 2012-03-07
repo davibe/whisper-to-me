@@ -1,9 +1,11 @@
-<div id="chart" class="chart" data-target="<%= @target %>">
+<div id="chart" class="chart"
+    data-target="<%= @target %>"
+    data-width="<%= @width%>"
+    data-from="<%= @from %>"
+    data-to="<%= @to %>"
+    data-markers="<%= @markers %>">
   <svg width="900" height="400"></svg>
 </div>
 <script>require(["/javascripts/graph.js"], function(graph) {
   graph("#chart");
-  setInterval (function () {
-    graph("#chart");
-  }, 5000);
 })</script>

@@ -10,7 +10,7 @@
     <style>
       .chart {
         font-family: "helvetica neue", "helvetica", "verdana";
-        font-weight: 500;
+        font-weight: 200;
       }
       .chart text { fill: black }
       .chart line { stroke: #ccc }
