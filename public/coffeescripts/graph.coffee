@@ -33,9 +33,8 @@ class DataSource
     @delegate = new DataSourceDelegate()
     @min = @max = @from = @to = null
     @palette = ["steelblue", "red", "green", "brown"]
-    @interval = 1000
-    @last_update = 0
-    @elapsed = 0
+    @interval = @options.interval || 1000
+    @time_drift = 0
 
   setDelegate: (@delegate) =>
 
@@ -112,6 +111,8 @@ class DataSource
         @from = min
       if @to == null || max > @to
         @to = max
+    if not @time_drift
+      @time_drift = (Date.now()/1000) - @to
 
 
 class DataView
