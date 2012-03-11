@@ -131,23 +131,18 @@ class DataView
     @first_cycle = true
 
   onUpdate: (source) =>
-    #@clear()
     @render source
-
-  clear: =>
-    @el = $ @el
-    content = @el.find '> *'
-    content.remove()
 
   render: (source) =>
     # Create chart
-    to = source.to
-    from = source.from
-    to = Date.now()
-    # TODO this range is not always precise
-    range = source.to - source.from
-    from = (to - (range * 1000)) / 1000
-    to /= 1000
+    to = (Date.now()/1000) - source.time_drift
+    if @previousTo
+      elapsed = (to - @previousTo) * 1000
+    else
+      elapsed = source.interval
+    @previousTo = to
+    from = to + @source.options.from
+    range = source.to - from
     if not @min || source.min < @min
       @min = source.min
     min = @min
@@ -185,14 +180,18 @@ class DataView
       fmt_time = d3.time.format("%a %e")
 
     # animate x translation
-    factor = (@source.elapsed * 0.8) / (to - from)
+    factor = (elapsed * 0.8) / (to - from)
+
     animate = (selector, refresh) =>
-      selector.attr('transform', null)
+      if not @options.animated
+        refresh(selector)
+        return
+      selector.attr('transform', "")
       refresh(selector)
       selector
         .transition()
         .ease('linear')
-        .duration(@source.elapsed)
+        .duration(elapsed)
         .attr("transform", "translate(" + (-1 * factor) + ")")
 
     # Draw X (time) scale
@@ -263,8 +262,7 @@ class DataView
         .style("stroke", '#efefef')
 
     line_y = vis.selectAll("line.y")
-    animate line_y, (selector) ->
-      selector
+    line_y
         .data(y_scale.ticks(height / 50))
         .enter()
         .append("svg:line")
@@ -280,7 +278,6 @@ class DataView
     if @first_cycle
       labels = vis.append("svg:svg")
       labels
-        .attr("class", "stats_label")
         .attr("x", 0)
         .attr("y", height + margin * 2)
         .attr("width", width - 400)
@@ -332,53 +329,54 @@ class DataView
         .x( (d)-> x_scale(d.x) )
         .y( (d)-> y_scale(d.y) )
 
-      line = vis.selectAll(".line")
+      line = vis.selectAll(".line"+i)
       if @first_cycle
         line
           .data([target.datapoints])
           .enter().append("svg:path")
-          .attr("class", "line")
+          .attr("class", "line"+i)
           .attr("d", svg_line)
           .style("stroke-width", target.width * 2)
           .style("stroke", target.color)
 
-      line = vis.selectAll(".line")
+      line = vis.selectAll(".line"+i)
       animate line, (selector) =>
         selector
           .data([target.datapoints])
           .attr("d", svg_line)
 
       # fill area under graph
-      svg_area = d3.svg.area().interpolate('basis')
-        .x((d) -> x_scale d.x)
-        .y((d) -> y_scale 0)
-        .y1((d) -> y_scale d.y)
+      if @options.area
+        svg_area = d3.svg.area().interpolate('basis')
+          .x((d) -> x_scale d.x)
+          .y((d) -> y_scale 0)
+          .y1((d) -> y_scale d.y)
 
-      area = vis.selectAll(".area")
-      if @first_cycle
-        area
-          .data([target.datapoints])
-          .enter()
-          .append("svg:path")
-          .attr("class", "area")
-          .on("click", @source.request)
-          .attr("d", svg_area)
-          .style("fill", target.color)
-          .style("opacity", 0.15)
+        area = vis.selectAll(".area"+i)
+        if @first_cycle
+          area
+            .data([target.datapoints])
+            .enter()
+            .append("svg:path")
+            .attr("class", "area"+i)
+            .on("click", @source.request)
+            .attr("d", svg_area)
+            .style("fill", target.color)
+            .style("opacity", 0.15)
 
-      area = vis.selectAll(".area")
-      animate area, (selector) ->
-        selector
-          .data([target.datapoints])
-          .attr("d", svg_area)
+        area = vis.selectAll(".area"+i)
+        animate area, (selector) ->
+          selector
+            .data([target.datapoints])
+            .attr("d", svg_area)
 
       # add markers
       if markers
-        markers = vis.selectAll(".circles")
+        markers = vis.selectAll(".circles"+i)
         if @first_cycle
           markers.data(target.datapoints)
             .enter().append("svg:circle")
-            .attr("class", "circles")
+            .attr("class", "circles"+i)
             .attr("r", 2.5)
             .attr("cx", (d) -> x_scale d.x)
             .attr("cy", (d) -> y_scale d.y)
@@ -386,45 +384,54 @@ class DataView
             .style("stroke-width", 1)
             .style('fill', '#fff')
 
-        markers = vis.selectAll(".circles")
+        markers = vis.selectAll(".circles"+i)
         animate markers, (selector) =>
           selector
             .attr("transform", "translate(" + (+0) + ")")
             .data(target.datapoints)
-            .attr("r", 2.5)
             .attr("cx", (d) -> x_scale d.x)
             .attr("cy", (d) -> y_scale d.y)
 
     # Draw Y (value) scale
     if @first_cycle
       # left clipping
-      # TODO use path instead of thick line
-      vis
-        .append("svg:line")
-        .attr("x1", -30)
-        .attr("x2", -30)
-        .attr("y1", height+40)
-        .attr("y2", -10)
-        .style("stroke-width", 80)
-        .style("stroke", '#fff')
+      svg_area = d3.svg.area().interpolate('linear')
+        .x((d) -> d.x)
+        .y((d) -> 0)
+        .y1((d) -> d.y)
+
+      vis.selectAll(".leftclip")
+        .data([
+          [
+            {x: -100, y: -100},
+            {x: -100, y: height+30},
+            {x: 10, y: height+30},
+            {x: 10, y: 0}
+          ]
+        ])
+        .enter()
+        .append("svg:path")
+        .attr("d", svg_area)
+        .attr("class", "leftclip")
+        .style("fill", "#fff")
+
       # right clipping
-      vis
-        .append("svg:line")
-        .attr("x1", width-30)
-        .attr("x2", width-30)
-        .attr("y1", height+40)
-        .attr("y2", -10)
-        .style("stroke-width", 80)
-        .style("stroke", '#fff')
+      vis.selectAll(".rightclip")
+        .data([
+          [
+            {x: width-50, y: -100},
+            {x: width-50, y: height+30},
+            {x: width+200, y: height+30},
+            {x: width+200, y: -100}
+          ]
+        ])
+        .enter()
+        .append("svg:path")
+        .attr("d", svg_area)
+        .attr("class", "rightclip")
+        .style("fill", "#fff")
 
-      test = vis.append("svg:line")
-        .attr("x", 100)
-        .attr("y", 100)
-        .attr("dx", x_scale 1000)
-        .attr("dy", x_scale 1000)
-        .style("stroke-width", 1.5)
-        .style("stroke", '#000')
-
+      # y-axis values
       text_y = vis.selectAll("text.y")
       text_y
         .data(y_scale.ticks(height / 50))
