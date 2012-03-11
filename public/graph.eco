@@ -1,11 +1,38 @@
 <div id="chart" class="chart"
-    data-target="<%= @target %>"
-    data-width="<%= @width%>"
-    data-from="<%= @from %>"
-    data-to="<%= @to %>"
-    data-markers="<%= @markers %>">
+    data-target="<%= @target %>">
   <svg width="900" height="400"></svg>
+  <br/>
+
+<div class="options" class="chart"
+    style="margin-left: 60px; background-color: #f7f7f7; width: 800px; padding: 5px;">
+
+  <form action="" method="get">
+  <select name="from">
+    <option value="-60">Last minute</option>
+    <option value="-300">Last 5 mins</option>
+    <option value="-600">Last 10 mins</option>
+    <option value="-1800">Last 30 mins</option>
+    <option value="-3600">Last hour</option>
+    <!--option value="-10800">Last 3 hours</option-->
+  </select>
+
+  <select name="interval">
+    <option value="1000">Refresh every second</option>
+    <option value="2000">Refresh 2 seconds</option>
+    <option value="4000">Refresh 4 seconds</option>
+    <option value="10000">Refresh 10 seconds</option>
+  </select>
+
+    <input type="checkbox" name="markers" value="true"/>Show markers</input>
+    <input type="checkbox" name="area" value="true"/>Draw areas</input>
+    <input type="checkbox" name="animated" value="true"/>Animated</input>
+    <input type="submit" style="display:none;" value="Refresh"/>
+  </form>
+
 </div>
+
+</div>
+
 <script>require(["/javascripts/graph.js"], function(graph) {
   graph("#chart");
 })</script>
