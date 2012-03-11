@@ -48,13 +48,14 @@ class DataSource
     @request()
 
   request: () =>
+    width = Math.abs @options.from
+    width += 2
+    @options.width = width
     start_time = Date.now()
     dReq = $.get "/render", @options
     dReq.fail @onRequestFailure
     dReq.done (results) =>
       now = Date.now()
-      @elapsed = now - @last_update
-      @last_update = Date.now()
       @onRequestDone(results)
       setTimeout @request, @interval
 
