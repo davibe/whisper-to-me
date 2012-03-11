@@ -1,3 +1,14 @@
+getUrlVars = ->
+  vars = {}
+  hash = undefined
+  hashes = window.location.href.slice(window.location.href.indexOf("?") + 1).split("&")
+  i = 0
+  while i < hashes.length
+    hash = hashes[i].split("=")
+    vars[hash[0]] = hash[1]
+    i++
+  return vars
+
 class DataSourceDelegate
   onUpdate: (targets) ->
     throw 'Not Implemented'
