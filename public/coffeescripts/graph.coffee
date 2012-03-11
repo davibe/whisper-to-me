@@ -9,6 +9,20 @@ getUrlVars = ->
     i++
   return vars
 
+# Restore values from url params
+$(document).ready () ->
+  form = $ 'form'
+  form.change ()->
+    form.submit()
+  values = getUrlVars()
+  for key of values
+    element = form.find '[name='+key+']'
+    if element.attr('type') == 'checkbox'
+      element.attr 'checked', 'checked'
+      continue
+
+    element.val values[key]
+
 class DataSourceDelegate
   onUpdate: (targets) ->
     throw 'Not Implemented'
