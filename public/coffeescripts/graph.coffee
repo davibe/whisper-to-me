@@ -119,6 +119,11 @@ class DataSource
 class DataView
   constructor: (@options) ->
     @el = $(@options.el).find 'svg'
+    vars = getUrlVars()
+    for key of vars
+      @options[key] = vars[key]
+    @options.from = parseInt @options.from
+    @options.width = parseInt @options.width if @options.width
     @palette = ["steelblue", "red", "green", "brown"]
     @source = new DataSource @options
     @source.setDelegate @
