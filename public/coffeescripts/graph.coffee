@@ -29,60 +29,58 @@ class DataSourceDelegate
 
 class DataSource
   constructor: (@options) ->
+    # Colors user for graph targets
+    @url = '/render'
     @targets = {}
-    @delegate = new DataSourceDelegate()
-    @min = @max = @from = @to = null
-    @palette = ["steelblue", "red", "green", "brown"]
     @interval = @options.interval || 1000
+    @min = @max = @from = @to = null
     @time_drift = 0
+    @stopped = true
+    @delegate = new DataSourceDelegate()
 
   setDelegate: (@delegate) =>
 
   getTargets: () =>
+    # Returns a list of targets
     result = []
     for key of @targets
       result.push @targets[key]
     return result
 
   start: =>
+    @stopped = false
     @request()
 
+  stop: =>
+    @stopped = true
+
   request: () =>
-    width = Math.abs @options.from
-    width += 2
-    @options.width = width
-    start_time = Date.now()
-    dReq = $.get "/render", @options
+    @options.width = (Math.abs @options.from) + 2
+    dReq = $.get @url, @options
     dReq.fail @onRequestFailure
     dReq.done (results) =>
-      now = Date.now()
       @onRequestDone(results)
-      setTimeout @request, @interval
+      if not @stopped
+        setTimeout @request, @interval
 
   onRequestDone: (results) =>
-    @min = null
-    @max = null
-    @palette = ["steelblue", "red", "green", "violet"]
+    @min = @max = @from = @to = null
+
     for result in results
       target = result.target
       datapoints = []
-      if result.datapoints.length == 0
-        return
-      # filter data points
-      min = max = null
+      if result.datapoints.length == 0 then return
+
+      min = max = null # of the target
       for point in result.datapoints
         if point[0]
           p =
             y: point[0] # value
             x: point[1] # time
-          if @min == null || p.y < @min
-            @min = p.y
-          if @max == null || p.y > @max
-            @max = p.y
-          if min == null || p.y < min
-            min = p.y
-          if max == null || p.y > max
-            max = p.y
+          if @min == null || p.y < @min then @min = p.y
+          if @max == null || p.y > @max then @max = p.y
+          if min == null || p.y < min then min = p.y
+          if max == null || p.y > max then max = p.y
           datapoints.push p
 
       label = target.split '.'
@@ -94,26 +92,22 @@ class DataSource
         last: datapoints[datapoints.length-1].y
         min: min
         max: max
-        color: @palette.shift()
         datapoints: datapoints
         lastupdate: datapoints[datapoints.length - 1].x
 
-    @updateRange()
-    @delegate.onUpdate this
-
-  updateRange: () =>
-    @from = @to = null
-    for key of @targets
-      datapoints = @targets[key].datapoints
+      # adjust from and to
       last = datapoints.length - 1
       min = datapoints[0].x
       max = datapoints[last].x
-      if @from == null || min < @from
-        @from = min
-      if @to == null || max > @to
-        @to = max
-    if not @time_drift
-      @time_drift = (Date.now()/1000) - @to
+      if @from == null || min < @from then @from = min
+      if @to == null || max > @to then @to = max
+
+    if not @time_drift then @time_drift = (Date.now()/1000) - @to
+    @delegate.onUpdate this
+
+  onRequestFailure: (results) =>
+    if window.console and window.console.log
+      console.log 'DataSource: Request failed'
 
 
 class DataView
