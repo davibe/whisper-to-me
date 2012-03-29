@@ -420,13 +420,14 @@ class DataView
         .style("fill", "#fff")
 
       # right clipping
+
       vis.selectAll(".rightclip")
         .data([
           [
-            {x: width-50, y: -100},
-            {x: width-50, y: height+30},
-            {x: width+200, y: height+30},
-            {x: width+200, y: -100}
+            {x: width+10, y: -100},
+            {x: width+10, y: height+30},
+            {x: width+100, y: height+30},
+            {x: width+100, y: -100}
           ]
         ])
         .enter()
