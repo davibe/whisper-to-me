@@ -1,6 +1,8 @@
 getUrlVars = ->
   vars = {}
   hash = undefined
+  if window.location.href.indexOf("?") == -1
+    return false
   hashes = window.location.href.slice(window.location.href.indexOf("?") + 1).split("&")
   i = 0
   while i < hashes.length
@@ -115,6 +117,11 @@ class DataView
     @palette = ["steelblue", "red", "green", "brown"]
     @el = $(@options.el).find 'svg'
     vars = getUrlVars()
+    if not vars
+      vars =
+        from : "-60"
+        interval: "1000"
+
     for key of vars
       @options[key] = vars[key]
     @options.from = parseInt @options.from
