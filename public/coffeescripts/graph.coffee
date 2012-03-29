@@ -160,6 +160,9 @@ class DataView
     width = chart.attr("width") - margin * 5
     height = chart.attr("height") - margin * (3 + targets.length) * 1.2
 
+    time_to_px = (time) ->
+      return time * width / range
+
     vis = chart.selectAll ("g")
     if not vis[0][0]
       vis = chart.append("svg:g")
