@@ -112,13 +112,13 @@ class DataSource
 
 class DataView
   constructor: (@options) ->
+    @palette = ["steelblue", "red", "green", "brown"]
     @el = $(@options.el).find 'svg'
     vars = getUrlVars()
     for key of vars
       @options[key] = vars[key]
     @options.from = parseInt @options.from
     @options.width = parseInt @options.width if @options.width
-    @palette = ["steelblue", "red", "green", "brown"]
     @source = new DataSource @options
     @source.setDelegate @
     @source.start()
@@ -446,18 +446,10 @@ define [], ->
   return (el, target)->
     $el = $(el)
     target = target || $el.data("target")
-    width = $el.data("width")
-    from = $el.data("from")
-    to = $el.data("until")
-    markers = $el.data("markers") == true
 
     options =
       target: target
-      width: width
-      from: from
-      to: to
-      markers: markers
       el: el
 
-    test = new DataView options
+    new DataView options
     return
