@@ -157,7 +157,7 @@ class DataView
     y_fmt = d3.format(",.2f")
 
     chart = d3.select(@el.parent()[0]).select("svg")
-    width = chart.attr("width") - margin * 5
+    width = chart.attr("width") - margin * 4
     height = chart.attr("height") - margin * (3 + targets.length) * 1.2
 
     time_to_px = (time) ->
