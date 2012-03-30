@@ -58,6 +58,8 @@ class DataSource
 
   request: () =>
     @options.width = (Math.abs @options.from) + 2
+    if @options.width > 300
+      @options.width = 300
     dReq = $.get @url, @options
     dReq.fail @onRequestFailure
     dReq.done (results) =>
@@ -222,6 +224,7 @@ class DataView
         .attr("text-anchor", "middle")
         .attr("class", "x")
         .text( (d)-> fmt_time(new Date(d * 1000)) )
+        .exit().remove()
 
     if @first_cycle
       line_x = vis.selectAll("line.x")
@@ -250,6 +253,7 @@ class DataView
         .style("stroke-width", 0.5)
         .style("stroke", '#efefef')
         .attr("class", (d, i)-> if i > 0 then "x" else "x axis" )
+        .exit().remove()
 
     if @first_cycle
       line_y = vis.selectAll("line.y")
