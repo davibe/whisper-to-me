@@ -152,6 +152,9 @@ class DataView
     if not @max || source.max > @max
       @max = source.max
     max = @max
+    min = source.min
+    max = source.max
+    min -= (max-min)/1000
 
     targets = source.getTargets()
     markers = @options.markers
