@@ -156,6 +156,8 @@ class DataView
     max = source.max
     min -= (max-min)/1000
 
+    chart = d3.select(@el.parent()[0]).select("svg")
+    chart_width = chart.attr("width")
     targets = source.getTargets()
     markers = @options.markers
     margin = 20
@@ -165,15 +167,15 @@ class DataView
     width = chart.attr("width") - margin * 4
     height = chart.attr("height") - margin * (3 + targets.length) * 1.2
 
-    time_to_px = (time) ->
-      return time * width / range
-
     vis = chart.selectAll ("g")
     if not vis[0][0]
       vis = chart.append("svg:g")
         .attr("transform", "translate(#{margin * 3},#{margin})")
 
-    x_scale = d3.scale.linear().domain([to, from]).range([width, 0])
+    time_to_px = (time) ->
+      return time * width / range
+
+    x_scale = d3.scale.linear().domain([to, from]).range([width + (time_to_px elapsed/1000), 0])
     y_scale = d3.scale.linear().domain([min, max]).range([height, 0])
       .nice().clamp(true)
 
@@ -189,7 +191,7 @@ class DataView
       fmt_time = d3.time.format("%a %e")
 
     # animate x translation
-    factor = (elapsed * 0.8) / (to - from)
+    factor = time_to_px elapsed/1000#(elapsed * 0.8) / (to - from)
 
     animate = (selector, refresh) =>
       if not @options.animated
@@ -243,6 +245,7 @@ class DataView
         .style("stroke-width", 0.5)
         .style("stroke", '#efefef')
         .attr("class", (d, i)-> if i > 0 then "x" else "x axis" )
+
 
     line_x = vis.selectAll("line.x")
     animate line_x, (selector) ->
