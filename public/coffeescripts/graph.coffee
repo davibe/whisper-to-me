@@ -160,7 +160,7 @@ class DataView
     chart_width = chart.attr("width")
     targets = source.getTargets()
     markers = @options.markers
-    margin = 20
+    margin = if chart_width < 501 then 15 else 20
     y_fmt = d3.format(",.2f")
 
     chart = d3.select(@el.parent()[0]).select("svg")
@@ -272,21 +272,24 @@ class DataView
         .attr("y1", y_scale)
         .attr("y2", y_scale)
         .attr("class", (d, i)-> if i > 0 then "y" else "y axis" )
-        .style("stroke-width", 0.5)
-        .style("stroke", '#efefef')
+        .style("stroke-width", 0.16)
+        .style("stroke", '#000')
 
+
+    vis.selectAll("line.y").remove()
     line_y = vis.selectAll("line.y")
     line_y
         .data(y_scale.ticks(height / 50))
         .enter()
         .append("svg:line")
-        .attr("x1", 0)
+        .attr("x1", 10)
         .attr("x2", width + 1)
         .attr("y1", y_scale)
         .attr("y2", y_scale)
-        .attr("class", (d, i)-> if i > 0 then "y" else "y axis" )
-        .style("stroke-width", 0.5)
-        .style("stroke", '#efefef')
+        .attr("class", (d, i)-> if i > 0 then "y" else "y axis")
+        .attr("opacity", 0.1)
+        .style("stroke-width", 0.16)
+        .style("stroke", '#000')
 
     # Add labels at bottom of chart
     if @first_cycle
@@ -294,7 +297,7 @@ class DataView
       labels
         .attr("x", 0)
         .attr("y", height + margin * 2)
-        .attr("width", width - 400)
+        .attr("width", width)
         .attr("height", margin * targets.length * 1.2)
       labels
         .selectAll("text.label")
@@ -304,7 +307,7 @@ class DataView
         .attr("x", 0)
         .attr("y", (d, i)-> margin + margin * i * 1.2 )
         .attr("class", "label")
-        .style("stroke", (d)-> d.color)
+        .style("stroke", (d, i)=> @palette[i])
         .style("stroke-width", 0.25)
         .text( (d)-> d.label )
 
@@ -330,7 +333,7 @@ class DataView
       .attr("class", "label")
       .attr("x", 400)
       .attr("y", (d, i)-> margin + margin * i * 1.2 )
-      .style("stroke", (d)-> d.color).attr("text-anchor", "end")
+      .style("stroke", (d, i)=> @palette[i]).attr("text-anchor", "end")
       .style("stroke-width", 0.25)
 
 
@@ -406,62 +409,79 @@ class DataView
             .attr("cx", (d) -> x_scale d.x)
             .attr("cy", (d) -> y_scale d.y)
 
-    # Draw Y (value) scale
-    if @first_cycle
-      # left clipping
-      svg_area = d3.svg.area().interpolate('linear')
-        .x((d) -> d.x)
-        .y((d) -> 0)
-        .y1((d) -> d.y)
+    # left clipping
+    svg_area = d3.svg.area().interpolate('linear')
+      .x((d) -> d.x)
+      .y((d) -> 0)
+      .y1((d) -> d.y)
 
-      vis.selectAll(".leftclip")
-        .data([
-          [
-            {x: -100, y: -100},
-            {x: -100, y: height+30},
-            {x: 10, y: height+30},
-            {x: 10, y: 0}
-          ]
-        ])
-        .enter()
-        .append("svg:path")
-        .attr("d", svg_area)
-        .attr("class", "leftclip")
-        .style("fill", "#fff")
+    vis.selectAll(".leftclip").remove()
+    vis.selectAll(".leftclip")
+      .data([
+        [
+          {x: -100, y: -100},
+          {x: -100, y: height+30},
+          {x: 10, y: height+30},
+          {x: 10, y: 0}
+        ]
+      ])
+      .enter()
+      .append("svg:path")
+      .attr("d", svg_area)
+      .attr("class", "leftclip")
+      .style("fill", "#fff")
 
-      # right clipping
+    # right clipping
+    vis.selectAll(".rightclip").remove()
+    vis.selectAll(".rightclip")
+      .data([
+        [
+          {x: chart_width-100, y: -100},
+          {x: chart_width-100, y: height+30},
+          {x: width+100, y: height+30},
+          {x: width+100, y: -100}
+        ]
+      ])
+      .enter()
+      .append("svg:path")
+      .attr("d", svg_area)
+      .attr("opacity", 1)
+      .attr("class", "rightclip")
+      .style("fill", "#fff")
 
-      vis.selectAll(".rightclip")
-        .data([
-          [
-            {x: width+10, y: -100},
-            {x: width+10, y: height+30},
-            {x: width+100, y: height+30},
-            {x: width+100, y: -100}
-          ]
-        ])
-        .enter()
-        .append("svg:path")
-        .attr("d", svg_area)
-        .attr("class", "rightclip")
-        .style("fill", "#fff")
+    # y-axis values
+    vis.selectAll("text.y").remove()
+    vis.selectAll("text.y")
+      .data(y_scale.ticks(height / 50))
+      .enter()
+      .append("svg:text")
+      .attr("x", 0)
+      .attr("y", y_scale)
+      .attr("dy", 3)
+      .attr("dx", -10)
+      .attr("class", "y")
+      .attr("text-anchor", "end")
+      .text(y_fmt)
 
-      # y-axis values
-      text_y = vis.selectAll("text.y")
-      text_y
-        .data(y_scale.ticks(height / 50))
-        .enter()
-        .append("svg:text")
-        .attr("x", -10)
-        .attr("y", y_scale)
-        .attr("dy", 3)
-        .attr("dx", -10)
-        .attr("class", "y")
-        .attr("text-anchor", "end")
-        .text(y_fmt)
+    if (chart_width > 700)
+      vis.selectAll("text")
+          .attr("font-size", 16)
+      @first_cycle = false
 
-    @first_cycle = false
+    else if (chart_width > 500)
+      vis.selectAll("text")
+          .attr("font-size", 14)
+      @first_cycle = false
 
+    else if (chart_width > 400)
+      vis.selectAll("text")
+          .attr("font-size", 12)
+      @first_cycle = false
+
+    else if (chart_width > 100)
+      vis.selectAll("text")
+          .attr("font-size", 10)
+      @first_cycle = false
 
 define [], ->
   return (el, target)->

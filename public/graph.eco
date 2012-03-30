@@ -1,6 +1,6 @@
 <div id="chart" class="chart"
     data-target="<%= @target %>">
-  <svg width="900" height="400"></svg>
+  <svg width="840" height="400" style="border: 0px solid gray;"></svg>
   <br/>
 
 <div class="options" class="chart"
