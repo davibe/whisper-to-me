@@ -32,7 +32,7 @@ class DataSourceDelegate
 class DataSource
   constructor: (@options) ->
     # Colors user for graph targets
-    @url = '/render'
+    @url = @options.url
     @targets = {}
     @interval = @options.interval || 1000
     @min = @max = @from = @to = null
@@ -484,13 +484,7 @@ class DataView
       @first_cycle = false
 
 define [], ->
-  return (el, target)->
-    $el = $(el)
-    target = target || $el.data("target")
-
-    options =
-      target: target
-      el: el
-
+  return (options)->
+    options.url = options.url || "/render"
     new DataView options
     return

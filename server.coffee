@@ -5,29 +5,36 @@ Path            = require("path")
 Whisper         = require("./lib/whisper")
 RequestContext  = require("./lib/request_context")
 
+baseurl = ""
+try
+  conf = require './local_conf'
+  baseurl = conf.baseurl
+catch e
+  console.log 'No local conf, using defaults.'
 
 server = Express.createServer()
 server.configure ->
   server.use Express.query()
-  server.use Express.static("#{__dirname}/public")
-
+  server.use baseurl,  Express.static("#{__dirname}/public")
   server.set "views", "#{__dirname}/public"
   server.set "view engine", "eco"
   server.set "view options", layout: "layout.eco"
   server.enable "json callback"
+  server.helpers
+    baseurl: baseurl 
 
 server.listen 8080
 
 whisper = new Whisper(process.env.GRAPHITE_STORAGE || "/opt/graphite/storage")
 
 # Main page lists all known metrics.
-server.get "/", (req, res, next)->
+server.get baseurl || "/", (req, res, next)->
   whisper.index (error, metrics)->
     return next(error) if error
     res.render "index", metrics: metrics
 
 # Graph a particular target.
-server.get "/graph/*", (req, res, next)->
+server.get baseurl + "/graph/*", (req, res, next)->
   options =
     target: req.params[0]
     width: req.query.width || 800
@@ -39,7 +46,7 @@ server.get "/graph/*", (req, res, next)->
     
 
 # This is supposed to work like Graphite's /render but only support JSON output.
-server.get "/render", (req, res, next)->
+server.get baseurl + "/render", (req, res, next)->
   return if not req.query.target
   from = (Date.now() / 1000 - 1*60*60) # last 24 hours by default
   to = Date.now() / 1000
@@ -81,20 +88,20 @@ server.get "/render", (req, res, next)->
 
 
 # Serve require.js from Node module.
-server.get "/javascripts/require.js", (req, res, next)->
+server.get baseurl + "/javascripts/require.js", (req, res, next)->
   File.readFile "#{__dirname}/node_modules/requirejs/require.js", (error, script)->
     return next(error) if error
     res.send script, "Content-Type": "application/javascript"
 
 # Serve D3 files from Node module.
-server.get "/javascripts/d3*.js", (req, res, next)->
+server.get baseurl + "/javascripts/d3*.js", (req, res, next)->
   name = req.params[0]
   File.readFile "#{__dirname}/node_modules/d3/d3#{name}.min.js", (error, script)->
     return next(error) if error
     res.send script, "Content-Type": "application/javascript"
 
 # Serve CoffeeScript files, compiled on demand.
-server.get "/javascripts/*.js", (req, res, next)->
+server.get baseurl + "/javascripts/*.js", (req, res, next)->
   name = req.params[0]
   filename = "#{__dirname}/public/coffeescripts/#{name}.coffee"
   Path.exists filename, (exists)->

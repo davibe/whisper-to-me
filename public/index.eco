@@ -1,5 +1,5 @@
 <ul>
   <% for metric in @metrics: %>
-    <li><a href="/graph/<%= metric %>"><%= metric %></a></li>
+    <li><a href="graph/<%= metric %>"><%= metric %></a></li>
   <% end %>
 </ul>
